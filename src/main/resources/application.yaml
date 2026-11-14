@@ -1,0 +1,19 @@
+spring:
+  application:
+    name: backend
+
+
+  datasource:
+    url: jdbc://postgresql://localhost:5433:/repopilot
+    username: repopilot
+    password: ${DB_PASSWORD}
+
+  jpa:
+    hibernate:
+      ddl-auto: validate
+
+    open-in-view: false
+
+  flyway:
+    enabled: true
+

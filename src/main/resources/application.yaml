@@ -2,18 +2,42 @@ spring:
   application:
     name: backend
 
-
   datasource:
-    url: jdbc://postgresql://localhost:5433:/repopilot
+    url: jdbc:postgresql://localhost:5433/repopilot
     username: repopilot
     password: ${DB_PASSWORD}
 
   jpa:
     hibernate:
       ddl-auto: validate
-
     open-in-view: false
 
   flyway:
     enabled: true
 
+  ai:
+    google:
+      genai:
+        api-key: ${GOOGLE_API_KEY}
+        chat:
+          model: gemini-3.8-flash
+        embedding:
+          api-key: ${GOOGLE_API_KEY}
+          text:
+            model: gemini-embedding-001
+            dimensions: 1536
+
+    vectorstore:
+      pgvector:
+        initialize-schema: false
+        dimensions: 1536
+        distance-type: COSINE_DISTANCE
+        index-type: HNSW
+        schema-name: public
+        table-name: vector_store
+
+management:
+  endpoints:
+    web:
+      exposure:
+        include: health,info

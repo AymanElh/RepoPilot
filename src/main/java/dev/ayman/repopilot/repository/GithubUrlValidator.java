@@ -26,6 +26,8 @@ public class GithubUrlValidator {
                     && uri.getPort() == -1
                     && uri.getRawQuery() == null
                     && uri.getRawFragment() == null
+
+
                     && PATH_PATTERN.matcher(uri.getPath()).matches();
         } catch (IllegalArgumentException e) {
             log.debug(e.getMessage());

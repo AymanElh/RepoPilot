@@ -16,6 +16,10 @@ spring:
     enabled: true
 
   ai:
+    model:
+      chat: ollama
+      embedding: google-genai
+
     google:
       genai:
         api-key: ${GOOGLE_API_KEY}
@@ -26,6 +30,15 @@ spring:
           text:
             model: gemini-embedding-001
             dimensions: 1536
+
+    ollama:
+      base-url: http://localhost:11434
+      chat:
+        options:
+          model: qwen2.5-coder:1.5b
+          temperature: 0.2
+          num-ctx: 8192
+          num-predict: 512
 
     vectorstore:
       pgvector:

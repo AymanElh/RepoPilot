@@ -14,6 +14,7 @@ import java.util.Map;
 public class RepositoryIndexingService {
 
     private final VectorStore vectorStore;
+    private final CodeChunkIdGenerator idGenerator;
 
     public int index(
             String repositoryId,
@@ -21,21 +22,27 @@ public class RepositoryIndexingService {
             List<CodeChunk> chunks
     ) {
         List<Document> documents = chunks.stream()
-                .map(chunk -> new Document(
-                        chunk.content(),
-                        Map.of(
+                .map(chunk -> Document.builder()
+                        .id(idGenerator.generate(
+                                repositoryId,
+                                commitSha,
+                                chunk
+                        ))
+                        .text(chunk.content())
+                        .metadata(Map.of(
                                 "repositoryId", repositoryId,
                                 "commitSha", commitSha,
                                 "filePath", chunk.filePath(),
                                 "startLine", chunk.startLine(),
                                 "endLine", chunk.endLine()
-                        )
-                ))
+                        ))
+                        .build()
+                )
                 .toList();
 
         int batchSize = 10;
 
-        for (int i = 0; i < documents.size(); i+= batchSize) {
+        for (int i = 0; i < documents.size(); i += batchSize) {
             int end = Math.min(i + batchSize, documents.size());
 
             vectorStore.add(documents.subList(i, end));

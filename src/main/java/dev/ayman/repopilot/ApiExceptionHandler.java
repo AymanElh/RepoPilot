@@ -1,6 +1,7 @@
 package dev.ayman.repopilot;
 
 import dev.ayman.repopilot.ai.UnsupportedChatProviderException;
+import org.springframework.core.task.TaskRejectedException;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.HttpStatusCode;
@@ -32,7 +33,9 @@ public class ApiExceptionHandler extends ResponseEntityExceptionHandler {
         return ResponseEntity.badRequest().body(body);
     }
 
-    /** Malformed JSON, or a provider value that is not in the enum. */
+    /**
+     * Malformed JSON, or a provider value that is not in the enum.
+     */
     @Override
     protected ResponseEntity<Object> handleHttpMessageNotReadable(
             HttpMessageNotReadableException ex, HttpHeaders headers, HttpStatusCode status, WebRequest request) {
@@ -45,19 +48,25 @@ public class ApiExceptionHandler extends ResponseEntityExceptionHandler {
         return respond(HttpStatus.BAD_REQUEST, "UNSUPPORTED_PROVIDER", ex.getMessage());
     }
 
-    /** e.g. "Invalid GitHub URL". */
+    /**
+     * e.g. "Invalid GitHub URL".
+     */
     @ExceptionHandler(IllegalArgumentException.class)
     public ResponseEntity<Map<String, Object>> handleBadRequest(IllegalArgumentException ex) {
         return respond(HttpStatus.BAD_REQUEST, "BAD_REQUEST", ex.getMessage());
     }
 
-    /** e.g. "Repository is already being indexed". */
+    /**
+     * e.g. "Repository is already being indexed".
+     */
     @ExceptionHandler(IllegalStateException.class)
     public ResponseEntity<Map<String, Object>> handleConflict(IllegalStateException ex) {
         return respond(HttpStatus.CONFLICT, "CONFLICT", ex.getMessage());
     }
 
-    /** HTTP errors coming back from the GitHub API. */
+    /**
+     * HTTP errors coming back from the GitHub API.
+     */
     @ExceptionHandler(RestClientResponseException.class)
     public ResponseEntity<Map<String, Object>> handleGithub(RestClientResponseException ex) {
         int status = ex.getStatusCode().value();
@@ -70,6 +79,20 @@ public class ApiExceptionHandler extends ResponseEntityExceptionHandler {
                     "GitHub rate limit reached. Please retry later.");
         }
         return respond(HttpStatus.BAD_GATEWAY, "GITHUB_ERROR", "GitHub returned an error (" + status + ").");
+    }
+
+    @ExceptionHandler(RepositoryNotFoundException.class)
+    public ResponseEntity<Map<String, Object>> handleRepositoryNotFound(RepositoryNotFoundException ex) {
+        return respond(HttpStatus.NOT_FOUND, "REPOSITORY_NOT_FOUND", ex.getMessage());
+    }
+
+    /**
+     * The indexing queue is full.
+     */
+    @ExceptionHandler(TaskRejectedException.class)
+    public ResponseEntity<Map<String, Object>> handleQueueFull(TaskRejectedException ex) {
+        return respond(HttpStatus.SERVICE_UNAVAILABLE, "INDEXING_QUEUE_FULL",
+                "Too many repositories are being indexed. Please retry later.");
     }
 
     private ResponseEntity<Map<String, Object>> respond(HttpStatus status, String code, String message) {

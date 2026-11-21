@@ -1,5 +1,7 @@
 package dev.ayman.repopilot.repository;
 
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Component;
 import org.springframework.web.client.RestClient;
 
@@ -8,11 +10,25 @@ import java.net.URI;
 @Component
 public class GithubRepositoryClient {
 
-    private final RestClient restClient = RestClient.builder()
-            .baseUrl("https://api.github.com")
-            .defaultHeader("Accept", "application/json")
-            .defaultHeader("X-GitHub-Api-Version", "2022-11-28")
-            .build();
+    private final RestClient restClient;
+
+
+    public GithubRepositoryClient() {
+        this("");
+    }
+
+    @Autowired
+    public GithubRepositoryClient(@Value("${repopilot.github.token:}") String token) {
+        RestClient.Builder builder = RestClient.builder()
+                .baseUrl("https://api.github.com")
+                .defaultHeader("Accept", "application/json")
+                .defaultHeader("X-Github-Api-Version", "2022-11-28");
+
+        if (token != null && !token.isBlank()) {
+            builder.defaultHeader("Authorization", "Bearer " + token);
+        }
+        this.restClient = builder.build();
+    }
 
 
     public RepositoryInfo fetchRepo(String url) {

@@ -38,7 +38,7 @@ class GithubArchiveClientTest {
         server.start();
         Path downloaded = null;
         try {
-            var client = new GithubArchiveClient("http://127.0.0.1:" + server.getAddress().getPort());
+            var client = new GithubArchiveClient("http://127.0.0.1:" + server.getAddress().getPort(), "");
             downloaded = client.download("owner", "repo", "commit");
             assertArrayEquals(archive, Files.readAllBytes(downloaded));
         } finally {

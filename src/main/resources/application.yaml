@@ -17,14 +17,17 @@ spring:
 
   ai:
     model:
-      chat: ollama
       embedding: google-genai
+
+    chat:
+      client:
+        enabled: false
 
     google:
       genai:
         api-key: ${GOOGLE_API_KEY}
         chat:
-          model: gemini-3.8-flash
+          model: ${GEMINI_CHAT_MODEL}
         embedding:
           api-key: ${GOOGLE_API_KEY}
           text:

@@ -1,5 +1,7 @@
 package dev.ayman.repopilot.chat;
 
+import dev.ayman.repopilot.ai.ChatClientRegistry;
+import dev.ayman.repopilot.ai.ChatProvider;
 import dev.ayman.repopilot.search.CodeSearchResult;
 import dev.ayman.repopilot.search.RepositorySearchService;
 import lombok.extern.slf4j.Slf4j;
@@ -13,14 +15,17 @@ import java.util.List;
 public class RepositoryChatService {
 
     private final RepositorySearchService searchService;
-    private final ChatClient chatClient;
+    private final ChatClientRegistry clientRegistry;
 
-    public RepositoryChatService(RepositorySearchService searchService, ChatClient.Builder builder) {
+    public RepositoryChatService(RepositorySearchService searchService, ChatClientRegistry clientRegistry) {
         this.searchService = searchService;
-        this.chatClient = builder.build();
+        this.clientRegistry = clientRegistry;
     }
 
-    public ChatResponse ask(String repositoryId, String question) {
+    public ChatResponse ask(String repositoryId, String question, ChatProvider chatProvider) {
+
+        ChatClient chatClient = clientRegistry.get(chatProvider);
+
         long searchStarted = System.nanoTime();
         log.info("Chat retrieval started for repository {}", repositoryId);
         List<CodeSearchResult> results = searchService.search(repositoryId, question);

@@ -13,8 +13,8 @@ public class AITestController {
     private final ChatClient chatClient;
     private final EmbeddingModel embeddingModel;
 
-    public AITestController(ChatClient.Builder chatClientBuilder, EmbeddingModel embeddingModel) {
-        this.chatClient = chatClientBuilder.build();
+    public AITestController(ChatClientRegistry registry, EmbeddingModel embeddingModel) throws IllegalAccessException {
+        this.chatClient = registry.get(null);
         this.embeddingModel = embeddingModel;
     }
 

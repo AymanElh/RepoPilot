@@ -1,5 +1,8 @@
 package dev.ayman.repopilot.chat;
 
+import dev.ayman.repopilot.ai.ChatProvider;
+import jakarta.validation.Valid;
+import jakarta.validation.constraints.NotBlank;
 import lombok.RequiredArgsConstructor;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
@@ -15,16 +18,18 @@ public class RepositoryChatController {
 
     @PostMapping("/chat")
     public ChatResponse chat(
-            @RequestBody ChatRequest request
+            @Valid @RequestBody ChatRequest request
     ) {
         return chatService.ask(
                 request.repositoryId(),
-                request.question()
+                request.question(),
+                request.provider()
         );
     }
 
     public record ChatRequest (
-            String repositoryId,
-            String question
+            @NotBlank String repositoryId,
+            @NotBlank String question,
+            ChatProvider provider
     ) {}
 }

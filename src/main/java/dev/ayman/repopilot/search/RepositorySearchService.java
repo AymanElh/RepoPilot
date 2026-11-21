@@ -3,6 +3,7 @@ package dev.ayman.repopilot.search;
 import lombok.RequiredArgsConstructor;
 import org.springframework.ai.vectorstore.SearchRequest;
 import org.springframework.ai.vectorstore.VectorStore;
+import org.springframework.ai.vectorstore.filter.FilterExpressionBuilder;
 import org.springframework.stereotype.Service;
 
 import java.util.List;
@@ -20,7 +21,7 @@ public class RepositorySearchService {
                 .topK(5)
                 .similarityThreshold(0.0)
                 .filterExpression(
-                        "repositoryId == '" + repositoryId + "'"
+                        new FilterExpressionBuilder().eq("repositoryId", repositoryId).build()
                 )
                 .build();
 

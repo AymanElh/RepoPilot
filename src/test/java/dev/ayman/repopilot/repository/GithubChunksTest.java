@@ -39,7 +39,7 @@ class GithubChunksTest {
             public Path download(String owner, String repo, String sha) {
                 return archive;
             }
-        }, extractor, new JavaCodeChunker());
+        }, extractor, new JavaCodeChunker(), null);
     }
 
     @Test

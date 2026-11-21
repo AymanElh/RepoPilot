@@ -2,7 +2,7 @@ package dev.ayman.repopilot.repository;
 
 import dev.ayman.repopilot.ingestion.CodeChunk;
 import dev.ayman.repopilot.ingestion.JavaCodeChunker;
-import dev.ayman.repopilot.ingestion.RepositoryIndexingService;
+import dev.ayman.repopilot.ingestion.RepositoryIngestionService;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.web.bind.annotation.*;
@@ -26,7 +26,7 @@ public class GithubTestController {
     private final GithubArchiveClient archiveClient;
     private final RepositorySourceExtractor extractor;
     private final JavaCodeChunker chunker;
-    private final RepositoryIndexingService indexingService;
+    private final RepositoryIngestionService ingestionService;
 
     @GetMapping("/info")
     public GithubRepositoryClient.RepositoryInfo info(
@@ -108,59 +108,17 @@ public class GithubTestController {
 
 
     @PostMapping("/index")
-    public Map<String, Object> index(
-            @RequestParam String url
-    ) throws IOException {
+    public Map<String, Object> index(@RequestParam String url) {
+        IndexedRepository repo = ingestionService.ingest(url);
 
-        if (!validator.isValid(url)) {
-            throw new IllegalArgumentException("Invalid GitHub URL");
-        }
-
-        var info = client.fetchRepo(url);
-
-        Path zipFile = archiveClient.download(
-                info.owner(),
-                info.name(),
-                info.commitSha()
+        return Map.of(
+                "repositoryId", repo.fullName(),
+                "status", repo.getStatus(),
+                "commitSha", String.valueOf(repo.getIndexedCommitSha()),
+                "javaFiles", repo.getJavaFiles(),
+                "indexedChunks", repo.getChunkCount(),
+                "error", String.valueOf(repo.getErrorMessage())
         );
-
-        Path directory = null;
-
-        try {
-            directory = extractor.extract(zipFile);
-
-            log.info("Directory: {}", directory);
-
-            List<Path> javaFiles = extractor.findJavaFiles(directory);
-
-            List<CodeChunk> chunks = new ArrayList<>();
-
-            for (Path file : javaFiles) {
-                chunks.addAll(chunker.chunk(directory, file));
-            }
-
-            String repositoryId = info.owner() + "/" + info.name();
-
-            int indexed = indexingService.index(
-                    repositoryId,
-                    info.commitSha(),
-                    chunks
-            );
-
-            return Map.of(
-                    "repositoryId", repositoryId,
-                    "commitSha", info.commitSha(),
-                    "javaFiles", javaFiles.size(),
-                    "indexedChunks", indexed
-            );
-
-        } finally {
-            Files.deleteIfExists(zipFile);
-
-            if (directory != null) {
-                extractor.deleteDirectory(directory);
-            }
-        }
     }
 
 }

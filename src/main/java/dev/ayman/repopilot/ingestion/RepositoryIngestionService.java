@@ -28,25 +28,36 @@ public class RepositoryIngestionService {
     private final VectorStore vectorStore;
 
 
+    public record PrepareIndexing(
+            IndexedRepository repository,
+            GithubRepositoryClient.RepositoryInfo info,
+            boolean needsIndexing
+    ) {
+    }
+
     public IndexedRepository ingest(String url) {
+        PrepareIndexing prepared = prepare(url);
+        return prepared.needsIndexing ? execute(prepared.repository(), prepared.info()) : prepared.repository();
+    }
+
+
+    public PrepareIndexing prepare(String url) {
         if (!urlValidator.isValid(url)) {
-            throw new IllegalArgumentException("Invalid GitHub URL");
+            throw new IllegalArgumentException("Invalid github url");
         }
 
         var info = repositoryClient.fetchRepo(url);
 
-        IndexedRepository repo = indexedRepositoryRepository
-                .findByOwnerAndName(info.owner(), info.name())
+        IndexedRepository repo = indexedRepositoryRepository.findByOwnerAndName(info.owner(), info.name())
                 .orElseGet(() -> newRepository(info));
 
         if (repo.getStatus() == RepositoryStatus.INDEXING) {
-            throw new IllegalStateException("Repository is already being indexed");
+            throw new IllegalArgumentException("Repository already being indexed");
         }
 
-        if (repo.getStatus() == RepositoryStatus.READY
-                && info.commitSha().equals(repo.getIndexedCommitSha())) {
+        if (repo.getStatus() == RepositoryStatus.READY && info.commitSha().equals(repo.getIndexedCommitSha())) {
             log.info("{} already indexed at {}, skipping", repo.fullName(), info.commitSha());
-            return repo;
+            return new PrepareIndexing(repo, info, false);
         }
 
         repo.setDefaultBranch(info.defaultBranch());
@@ -54,15 +65,22 @@ public class RepositoryIngestionService {
         repo.setErrorMessage(null);
         repo = indexedRepositoryRepository.save(repo);
 
-        // 6. Do the real work. On failure keep the OLD chunks and record FAILED.
+        return new PrepareIndexing(repo, info, true);
+    }
+
+    public IndexedRepository execute(IndexedRepository repo, GithubRepositoryClient.RepositoryInfo info) {
         try {
             return runIndexing(repo, info);
         } catch (Exception e) {
             log.error("Indexing {} failed", repo.fullName(), e);
-            repo.setStatus(RepositoryStatus.FAILED);
-            repo.setErrorMessage(truncate(e.getMessage()));
-            return indexedRepositoryRepository.save(repo);
+            return markFailed(repo, e.getMessage());
         }
+    }
+
+    public IndexedRepository markFailed(IndexedRepository repo, String message) {
+        repo.setStatus(RepositoryStatus.FAILED);
+        repo.setErrorMessage(truncate(message));
+        return indexedRepositoryRepository.save(repo);
     }
 
     private IndexedRepository runIndexing(

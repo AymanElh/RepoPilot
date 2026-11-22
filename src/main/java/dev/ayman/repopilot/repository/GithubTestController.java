@@ -1,5 +1,6 @@
 package dev.ayman.repopilot.repository;
 
+import org.springframework.context.annotation.Profile;
 import dev.ayman.repopilot.ingestion.CodeChunk;
 import dev.ayman.repopilot.ingestion.JavaCodeChunker;
 import dev.ayman.repopilot.ingestion.RepositoryIngestionService;
@@ -16,6 +17,7 @@ import java.util.Locale;
 import java.util.Map;
 
 @Slf4j
+@Profile("dev")
 @RestController
 @RequiredArgsConstructor
 @RequestMapping("/api/dev/github")

@@ -2,6 +2,7 @@ package dev.ayman.repopilot.search;
 
 import lombok.RequiredArgsConstructor;
 import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
@@ -9,7 +10,7 @@ import org.springframework.web.bind.annotation.RestController;
 import java.util.List;
 
 @RestController
-@RequestMapping("/api/dev/repositories")
+@RequestMapping("/api/repositories/{owner}/{name}")
 @RequiredArgsConstructor
 public class RepositorySearchController {
 
@@ -17,9 +18,10 @@ public class RepositorySearchController {
 
     @GetMapping("/search")
     public List<CodeSearchResult> search(
-            @RequestParam String repositoryId,
+            @PathVariable String owner,
+            @PathVariable String name,
             @RequestParam String q
     ) {
-        return searchService.search(repositoryId, q);
+        return searchService.search(owner + "/" + name, q);
     }
 }

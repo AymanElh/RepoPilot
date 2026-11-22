@@ -1,11 +1,13 @@
 package dev.ayman.repopilot;
 
+import org.springframework.context.annotation.Profile;
 import lombok.RequiredArgsConstructor;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
 import java.util.Map;
 
+@Profile("dev")
 @RestController
 @RequiredArgsConstructor
 @RequestMapping("/api/dev/code-search")

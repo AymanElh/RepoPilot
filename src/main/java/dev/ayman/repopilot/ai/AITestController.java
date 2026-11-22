@@ -1,5 +1,6 @@
 package dev.ayman.repopilot.ai;
 
+import org.springframework.context.annotation.Profile;
 import org.springframework.ai.chat.client.ChatClient;
 import org.springframework.ai.embedding.EmbeddingModel;
 import org.springframework.web.bind.annotation.GetMapping;
@@ -7,6 +8,7 @@ import org.springframework.web.bind.annotation.RestController;
 
 import java.util.Map;
 
+@Profile("dev")
 @RestController
 public class AITestController {
 

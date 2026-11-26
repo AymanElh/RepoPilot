@@ -98,4 +98,60 @@ describe('App', () => {
     fixture.detectChanges();
     expect(page.textContent).toContain('No repositories yet');
   });
+
+  it('renders a Markdown answer and its source from the selected provider', async () => {
+    const fixture = await openRepositories();
+    const http = TestBed.inject(HttpTestingController);
+    const readyRepository: Repository = { ...repository, status: 'READY' };
+    http.expectOne('/api/repositories').flush([readyRepository]);
+    fixture.detectChanges();
+
+    const page: HTMLElement = fixture.nativeElement;
+    const repositoryPath = `/repositories/${repository.fullName}`;
+    const chatLink = page.querySelector<HTMLAnchorElement>('a.chat-link')!;
+    expect(chatLink.getAttribute('href')).toBe(repositoryPath);
+    chatLink.click();
+    await fixture.whenStable();
+
+    http.expectOne({ method: 'GET', url: `/api${repositoryPath}` }).flush(readyRepository);
+    http.expectOne('/api/ai/providers').flush({ defaultProvider: 'GEMINI', providers: ['OLLAMA', 'GEMINI'] });
+    fixture.detectChanges();
+    const provider = page.querySelector<HTMLSelectElement>('#chat-provider')!;
+    expect(provider.value).toBe('GEMINI');
+    provider.value = 'OLLAMA';
+    page.querySelector('textarea')!.value = 'Where is the application configured?';
+    page.querySelector('form')!.dispatchEvent(new Event('submit', { cancelable: true }));
+
+    const request = http.expectOne({ method: 'POST', url: `/api${repositoryPath}/chat` });
+    expect(request.request.body).toEqual({ question: 'Where is the application configured?', provider: 'OLLAMA' });
+    fixture.detectChanges();
+    expect(page.querySelector<HTMLButtonElement>('button[type="submit"]')!.disabled).toBe(true);
+
+    const githubUrl = `https://github.com/${repository.fullName}/blob/main/src/App.java#L4-L8`;
+    request.flush({
+      answer: [
+        '### Entry point',
+        '',
+        'The application starts in `App.java` [SOURCE 1].',
+        '',
+        '- Load the **configuration**.',
+        '',
+        '```java',
+        'class App {}',
+        '```',
+        '',
+        '<b id="raw-markup">Untrusted HTML</b>',
+      ].join('\n'),
+      sources: [{ filePath: 'src/App.java', startLine: 4, endLine: 8, githubUrl }],
+    });
+    fixture.detectChanges();
+    const answer = page.querySelector('.chat-answer-markdown');
+    expect(answer?.querySelector('h3')?.textContent).toBe('Entry point');
+    expect(answer?.querySelector('p code')?.textContent).toBe('App.java');
+    expect(answer?.querySelector('li strong')?.textContent).toBe('configuration');
+    expect(answer?.querySelector('pre code')?.textContent).toBe('class App {}\n');
+    expect(answer?.querySelector('#raw-markup')).toBeNull();
+    expect(page.querySelector('.sources a')?.getAttribute('href')).toBe(githubUrl);
+    expect(page.querySelector<HTMLButtonElement>('button[type="submit"]')!.disabled).toBe(false);
+  });
 });

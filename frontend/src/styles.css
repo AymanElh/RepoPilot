@@ -1,8 +1,55 @@
 @import 'tailwindcss';
 
+app-root {
+  --canvas: #0e0e0d;
+  --panel: #181816;
+  --field: #2a2a26;
+  --ink: #ebe7e0;
+  --muted: #a29c91;
+  --line: #34332e;
+  --accent: #6db33f;
+  --accent-hover: #83c953;
+  --error: #f7a294;
+}
+
 @font-face {
   font-family: 'Onest';
   src: url('./assets/fonts/onest.woff2') format('woff2');
   font-weight: 100 900;
   font-display: swap;
 }
+
+.chat-answer-markdown {
+  max-width: 75ch;
+  line-height: 1.65;
+  overflow-wrap: anywhere;
+}
+
+.chat-answer-markdown > * + * { margin-block-start: .8rem; }
+.chat-answer-markdown :is(h1, h2, h3, h4, h5, h6) { font-weight: 700; line-height: 1.3; }
+.chat-answer-markdown :is(h1, h2) { font-size: 1.1rem; }
+.chat-answer-markdown :is(ol, ul) { padding-inline-start: 1.5rem; }
+.chat-answer-markdown ul { list-style-type: disc; }
+.chat-answer-markdown ol { list-style-type: decimal; }
+.chat-answer-markdown li + li { margin-block-start: .25rem; }
+.chat-answer-markdown a { color: var(--accent); text-decoration: underline; }
+.chat-answer-markdown a:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
+
+.chat-answer-markdown code {
+  padding: .1em .3em;
+  background: var(--field);
+  font: .9em ui-monospace, monospace;
+}
+
+.chat-answer-markdown pre {
+  overflow-x: auto;
+  padding: .75rem;
+  border: 1px solid var(--line);
+  background: var(--canvas);
+}
+
+.chat-answer-markdown pre code { padding: 0; background: transparent; }
+.chat-answer-markdown blockquote { padding-inline-start: .85rem; border-inline-start: 2px solid var(--line); color: var(--muted); }
+.chat-answer-markdown table { display: block; max-width: 100%; overflow-x: auto; }
+.chat-answer-markdown :is(th, td) { padding: .35rem .55rem; border: 1px solid var(--line); text-align: start; }
+.chat-answer-markdown th { background: var(--field); }

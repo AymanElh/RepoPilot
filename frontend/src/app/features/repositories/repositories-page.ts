@@ -2,6 +2,7 @@ import { HttpErrorResponse } from '@angular/common/http';
 import { Component, DestroyRef, computed, inject, signal } from '@angular/core';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { FormField, FormRoot, form, pattern, required } from '@angular/forms/signals';
+import { RouterLink } from '@angular/router';
 import { EMPTY, Subject, catchError, firstValueFrom, repeat, startWith, switchMap, timer } from 'rxjs';
 import { Repository, RepositoryStatus } from '../../core/api/api.models';
 import { RepositoriesApi } from '../../core/api/repositories.api';
@@ -11,7 +12,7 @@ const GITHUB_REPOSITORY_URL = /^https:\/\/github\.com\/[^/?#]+\/[^/?#]+$/i;
 
 @Component({
   selector: 'app-repositories-page',
-  imports: [FormField, FormRoot],
+  imports: [FormField, FormRoot, RouterLink],
   templateUrl: './repositories-page.html',
   styleUrl: './repositories-page.css',
 })

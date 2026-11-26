@@ -1,13 +1,4 @@
 :host {
-  --canvas: #0e0e0d;
-  --panel: #181816;
-  --field: #2a2a26;
-  --ink: #ebe7e0;
-  --muted: #a29c91;
-  --line: #34332e;
-  --accent: #6db33f;
-  --accent-hover: #83c953;
-  --error: #f7a294;
   display: block;
   min-height: 100vh;
   background: var(--canvas);
@@ -87,6 +78,9 @@ input[aria-invalid='true'] { border-color: var(--error); }
 .repository-details p { margin-top: .15rem; font-size: .78rem; }
 .repository-details p:not(.error) { color: var(--muted); }
 .repository-details a:hover { text-decoration: underline; }
+.repository-actions { display: grid; justify-items: end; gap: .3rem; }
+.chat-link { min-height: 1.5rem; color: var(--accent); font-weight: 600; white-space: nowrap; }
+.chat-link:hover { text-decoration: underline; }
 .status { padding: 3px 8px; background: var(--field); color: #cfc9bf; font-size: .75rem; font-weight: 600; line-height: 1.35; }
 .status[data-status='READY'] { background: #14301f; color: #86d6a8; }
 .status[data-status='INDEXING'] { background: #29351e; color: #c4dca9; }

@@ -79,9 +79,18 @@
                   <p>Branch {{ repository.defaultBranch }}</p>
                 }
               </div>
-              <span class="status" [attr.data-status]="repository.status" role="status">
-                <span class="sr-only">{{ repository.fullName }}: </span>{{ statusLabels[repository.status] }}
-              </span>
+              <div class="repository-actions">
+                <span class="status" [attr.data-status]="repository.status" role="status">
+                  <span class="sr-only">{{ repository.fullName }}: </span>{{ statusLabels[repository.status] }}
+                </span>
+                @if (repository.status === 'READY') {
+                  <a class="chat-link"
+                    [routerLink]="['/repositories', repository.owner, repository.fullName.split('/')[1]]"
+                    [attr.aria-label]="'Open chat for ' + repository.fullName">
+                    Open chat <span aria-hidden="true">→</span>
+                  </a>
+                }
+              </div>
             </li>
           }
         </ul>

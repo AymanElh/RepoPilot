@@ -82,6 +82,51 @@
             </section>
           }
         </div>
+
+        <section class="panel code-search" aria-labelledby="search-heading">
+          <h2 id="search-heading">Search indexed code</h2>
+          <form class="search-form" (submit)="$event.preventDefault(); search(query.value)">
+            <div class="search-field">
+              <label for="search-query">Code search query</label>
+              <input #query id="search-query" type="search" required [readOnly]="searching()"
+                placeholder="e.g. ParallelDataSimulator" />
+            </div>
+            <button type="submit" [disabled]="!canSearch()">{{ searching() ? 'Searching…' : 'Search code' }}</button>
+          </form>
+
+          @if (searchError(); as message) {
+            <p class="search-feedback search-error" role="alert">{{ message }}</p>
+          }
+
+          @let matches = searchResults();
+          <div class="search-feedback notice" role="status">
+            @if (searching()) {
+              Searching the indexed code…
+            } @else if (matches) {
+              @if (matches.length) {
+                {{ matches.length }} {{ matches.length === 1 ? 'match' : 'matches' }}
+              } @else {
+                No matching code found. Try a different query.
+              }
+            }
+          </div>
+
+          @if (matches?.length) {
+            <ul class="search-results" role="list">
+              @for (match of matches; track $index) {
+                <li>
+                  <h3>
+                    <a [href]="match.githubUrl" target="_blank" rel="noopener noreferrer">
+                      {{ match.filePath }} <span aria-hidden="true">↗&#xfe0e;</span><span class="sr-only"> (opens on GitHub in a new tab)</span>
+                    </a>
+                  </h3>
+                  <p class="source-lines">Lines {{ match.startLine }}–{{ match.endLine }}</p>
+                  <pre tabindex="0" [attr.aria-label]="'Code snippet from ' + match.filePath"><code>{{ match.content }}</code></pre>
+                </li>
+              }
+            </ul>
+          }
+        </section>
       }
       @default {
         <p class="panel notice" role="status">Chat is available after indexing finishes. Return to Repositories to check progress.</p>

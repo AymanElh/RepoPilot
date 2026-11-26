@@ -3,11 +3,12 @@ import {Component, computed, DestroyRef, inject, signal} from '@angular/core';
 import {ActivatedRoute, RouterLink} from '@angular/router';
 import {RepositoriesApi} from '../../core/api/repositories.api';
 import {ChatApi} from '../../core/api/chat.api';
-import {ChatResponse, ProvidersResponse, Repository} from '../../core/api/api.models';
+import {ChatResponse, CodeSearchResult, ProvidersResponse, Repository} from '../../core/api/api.models';
 import {ProvidersApi} from '../../core/api/providers.api';
 import {takeUntilDestroyed} from '@angular/core/rxjs-interop';
 import MarkdownIt from 'markdown-it';
 import {finalize} from 'rxjs';
+import {SearchApi} from '../../core/api/search.api';
 
 const markdown = new MarkdownIt({html: false});
 
@@ -24,6 +25,7 @@ export class RepositoryChatPage {
   private readonly chatApi = inject(ChatApi);
   private readonly providersApi = inject(ProvidersApi);
   private readonly destroyRef = inject(DestroyRef);
+  private readonly searchApi = inject(SearchApi);
 
   private readonly owner = this.route.snapshot.paramMap.get('owner');
   private readonly name = this.route.snapshot.paramMap.get('name');
@@ -40,6 +42,14 @@ export class RepositoryChatPage {
   protected readonly canAsk = computed(
     () => this.repository()?.status === 'READY' && !this.loadingProviders() && !this.asking()
   );
+
+  protected readonly canSearch = computed(
+    () => this.repository()?.status === 'READY' && !this.searching()
+  );
+
+  protected readonly searchResults = signal<CodeSearchResult[] | null>(null)
+  protected readonly searching = signal(false);
+  protected readonly searchError = signal('');
 
 
   constructor() {
@@ -94,6 +104,28 @@ export class RepositoryChatPage {
           const message = error instanceof HttpErrorResponse ? error.error?.message : undefined;
           this.error.set(typeof message === 'string' && message ? message : 'Could not get an answer. Try again.');
         }
+      })
+  }
+
+  protected search(query: string): void {
+    const trimmedQuery = query.trim();
+
+    if (!this.owner || !this.name || !trimmedQuery || !this.canSearch()) {
+      return;
+    }
+
+    this.searchError.set('');
+    this.searchResults.set(null);
+    this.searching.set(true);
+
+    this.searchApi.search(this.owner, this.name, trimmedQuery)
+      .pipe(
+        takeUntilDestroyed(this.destroyRef),
+        finalize(() => this.searching.set(false))
+      )
+      .subscribe({
+        next: (results) => this.searchResults.set(results),
+        error: () => this.searchError.set('Could not search the repository, Try again')
       })
   }
 }

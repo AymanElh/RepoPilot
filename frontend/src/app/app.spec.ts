@@ -154,4 +154,41 @@ describe('App', () => {
     expect(page.querySelector('.sources a')?.getAttribute('href')).toBe(githubUrl);
     expect(page.querySelector<HTMLButtonElement>('button[type="submit"]')!.disabled).toBe(false);
   });
+
+  it('searches a ready repository and displays a code snippet and GitHub line range', async () => {
+    const fixture = TestBed.createComponent(App);
+    fixture.detectChanges();
+    const repositoryPath = `/repositories/${repository.fullName}`;
+    await TestBed.inject(Router).navigateByUrl(repositoryPath);
+    await fixture.whenStable();
+
+    const http = TestBed.inject(HttpTestingController);
+    http.expectOne(`/api${repositoryPath}`).flush({ ...repository, status: 'READY' });
+    http.expectOne('/api/ai/providers').flush({ defaultProvider: 'OLLAMA', providers: ['OLLAMA'] });
+    fixture.detectChanges();
+
+    const page: HTMLElement = fixture.nativeElement;
+    const search = page.querySelector<HTMLElement>('.code-search')!;
+    const query = search.querySelector('input')!;
+    const button = search.querySelector('button')!;
+    query.value = '  Find a pet by name  ';
+    search.querySelector('form')!.dispatchEvent(new Event('submit', { cancelable: true }));
+
+    const request = http.expectOne((request) => request.method === 'GET' && request.url === `/api${repositoryPath}/search`);
+    expect(request.request.params.get('q')).toBe('Find a pet by name');
+    fixture.detectChanges();
+    expect(button.disabled).toBe(true);
+
+    const filePath = 'src/PetRepository.java';
+    const githubUrl = `https://github.com/${repository.fullName}/blob/main/${filePath}#L12-L14`;
+    const content = 'List<Pet> findByName(String name);';
+    request.flush([{ filePath, startLine: 12, endLine: 14, githubUrl, content, store: null }]);
+    fixture.detectChanges();
+
+    expect(search.textContent).toContain('1 match');
+    expect(search.textContent).toContain('Lines 12–14');
+    expect(search.querySelector('pre code')?.textContent).toBe(content);
+    expect(search.querySelector('.search-results a')?.getAttribute('href')).toBe(githubUrl);
+    expect(button.disabled).toBe(false);
+  });
 });

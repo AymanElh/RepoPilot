@@ -1,0 +1,100 @@
+<header class="site-header">
+  <div class="container brand">RepoPilot</div>
+</header>
+
+<main class="container" aria-labelledby="page-title">
+  <div class="page-heading">
+    <h1 id="page-title">Repositories</h1>
+    <p>Add a GitHub repository to index its Java source code.</p>
+  </div>
+
+  <div class="workspace">
+    <section class="panel add-panel" aria-labelledby="add-heading">
+      <h2 id="add-heading">Add a repository</h2>
+      <form [formRoot]="repositoryForm">
+        @let urlField = repositoryForm.url();
+        @let showUrlError = urlField.touched() && urlField.invalid();
+        <label for="github-url">GitHub repository URL</label>
+        <input
+          id="github-url"
+          type="url"
+          placeholder="https://github.com/owner/repo"
+          autocomplete="url"
+          spellcheck="false"
+          [formField]="repositoryForm.url"
+          [readOnly]="repositoryForm().submitting()"
+          [attr.aria-describedby]="showUrlError ? 'url-hint url-error' : 'url-hint'"
+          [attr.aria-invalid]="showUrlError ? 'true' : null"
+        />
+        <p class="hint" id="url-hint">Use the main URL of a public repository.</p>
+        @if (showUrlError) {
+          <p class="error" id="url-error" role="alert">{{ urlField.errors()[0]?.message }}</p>
+        }
+        @if (submitError(); as error) {
+          <p class="error" role="alert">{{ error }}</p>
+        }
+        <button class="button button-primary" type="submit" [disabled]="repositoryForm().submitting()">
+          @if (!repositoryForm().submitting()) { <span aria-hidden="true">+</span> }
+          {{ repositoryForm().submitting() ? 'Submitting…' : 'Index repository' }}
+        </button>
+      </form>
+    </section>
+
+    <section class="panel repository-panel" aria-labelledby="list-heading">
+      @let items = repositories();
+      <header class="list-header">
+        <h2 id="list-heading">Repository library</h2>
+        @if (items) {
+          <span class="item-count">{{ items.length }} {{ items.length === 1 ? 'repository' : 'repositories' }}</span>
+        }
+      </header>
+
+      <div class="column-headings" aria-hidden="true"><span>Repository</span><span>Status</span></div>
+
+      @if (listError(); as error) {
+        <div class="list-message">
+          <div role="alert">
+            <p class="message-title">Couldn’t load repositories</p>
+            <p>{{ error }}</p>
+          </div>
+          <button class="button" type="button" (click)="refresh()">Try again</button>
+        </div>
+      }
+
+      @if (items?.length) {
+        <ul class="repository-list" role="list">
+          @for (repository of items; track repository.id) {
+            <li class="repository-row" [attr.data-status]="repository.status">
+              <div class="repository-details">
+                <h3>
+                  <a [href]="'https://github.com/' + repository.fullName" target="_blank" rel="noopener noreferrer">
+                    {{ repository.fullName }} <span aria-hidden="true">↗&#xfe0e;</span><span class="sr-only"> (opens GitHub in a new tab)</span>
+                  </a>
+                </h3>
+                @if (repository.status === 'FAILED' && repository.errorMessage) {
+                  <p class="error">{{ repository.errorMessage }}</p>
+                } @else if (repository.status === 'READY') {
+                  <p>{{ repository.javaFiles }} Java files · {{ repository.chunkCount }} chunks</p>
+                } @else if (repository.defaultBranch) {
+                  <p>Branch {{ repository.defaultBranch }}</p>
+                }
+              </div>
+              <span class="status" [attr.data-status]="repository.status" role="status">
+                <span class="sr-only">{{ repository.fullName }}: </span>{{ statusLabels[repository.status] }}
+              </span>
+            </li>
+          }
+        </ul>
+      } @else if (!listError()) {
+        @if (items) {
+          <div class="list-message">
+            <p class="message-title">No repositories yet</p>
+            <p>Your first repository will appear here once you submit its URL.</p>
+          </div>
+        } @else {
+          <div class="list-message" role="status"><p>Loading repositories…</p></div>
+        }
+      }
+    </section>
+  </div>
+</main>
